@@ -20,18 +20,16 @@ import pprint
 import re
 import sys
 
-""" Global Variables """
-dhcpdPath       = "/etc/dhcp/"
-dhcpdResFile    = "dhcpd-reservations.conf"
+DEFAULT_DHCPD_PATH  = "/etc/dhcp/"
+DEFAULT_DHCPD_RES_FILE  = "dhcpd-reservations.conf"
 
-""" Global Objects """
 app         = Flask(__name__)
 api         = Api(app)
 app.debug   = False
 
 """ Check for a user defined config. """
 def checkUserDefinedConfig(**kwargs):
-    out = dhcpdResFile
+    out = DEFAULT_DHCPD_RES_FILE
     try:
         out = kwargs['dhcpdResFile']
     except KeyError:
@@ -40,9 +38,9 @@ def checkUserDefinedConfig(**kwargs):
 
 """ Read the host reservations conf file, and return a dictionary. """
 def readHostReservationsConfig(**kwargs):
-    dhcpdResFile = checkUserDefinedConfig(**kwargs)
+    resFile = checkUserDefinedConfig(**kwargs)
     hosts = {}
-    with open(dhcpdPath + dhcpdResFile, 'r') as file:
+    with open(DEFAULT_DHCPD_PATH + resFile, 'r') as file:
         for entry in file:
             if entry == "\n":
                 continue
@@ -103,15 +101,16 @@ class HostReservations(Resource):
         host            = args['host']
         macAddr         = args['macAddr']
         ipAddr          = args['ipAddr']
-        confFile        = args['dhcpdResFile']
+        resFile         = args['dhcpdResFile']
         
-        if confFile is None:
-            confFile = dhcpdResFile
+        if resFile is None:
+            resFile = DEFAULT_DHCPD_RES_FILE
 
         """ Check that there are no duplicates. A response back with a JSON 
         object means a duplicate was found."""
         check = checkExists(host=host, macAddr=macAddr, ipAddr=ipAddr)
         if len(check) > 0:
+            check['Error'] = "Duplicate entries found on the following attributes"
             return json.dumps(check)
 
         """ All is good. Dump the new host entry. """
@@ -119,11 +118,11 @@ class HostReservations(Resource):
         "; fixed-address " + ipAddr + "; }\n"
         
         try:
-            with open(dhcpdPath + confFile, 'a') as file:
+            with open(DEFAULT_DHCPD_PATH + resFile, 'a') as file:
                 file.write(hostEntry)
-                return json.dumps(["Info", "Host entry added."])
+                return json.dumps({'Info' : 'Host entry added.'})
         except IOError:
-            return json.dumps(["Error","Invalid host reservation file."])
+            return json.dumps({'Error' : 'Invalid host reservation file.'})
 
 api.add_resource(HostReservations, '/HostReservations')
 
