@@ -17,7 +17,7 @@ python dhcpd-flask-client.py --get
 To add a host reservation entry
 
 ```
-python dhcpd-flask-client --add --host somename --mac ff:ff:ff:ff:ff:ff --ip 127.0.0.1
+python dhcpd-flask-client.py --add --host somename --mac ff:ff:ff:ff:ff:ff --ip 127.0.0.1
 ```
 
 This is a simple self-starter/learn Python project for myself with some pratical use in my personal lab environment.
